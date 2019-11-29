@@ -32,7 +32,7 @@ class MockURLProtocol: URLProtocol {
         }
         
         if let durationString = request.value(forHTTPHeaderField: MockDurationKey), let duration = Int(durationString) {
-            let deadline = DispatchTime.now() + DispatchTimeInterval.seconds(duration)
+            let deadline = DispatchTime.now() + DispatchTimeInterval.milliseconds(duration)
             DispatchQueue.global().asyncAfter(deadline: deadline) { [weak self] in
                 guard let strongSelf = self else { return }
                 handle(strongSelf.request)
