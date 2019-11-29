@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'AlamofireSessionRenewer_Example' do
+  pod 'AlamofireSessionRenewer', :path => '../'
+
+  target 'AlamofireSessionRenewer_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
