@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://dashdevs.com'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'dashdevs llc' => 'hello@dashdevs.com' }
-  s.source           = { :git => 'https://github.com/dashdevs/AlamofireSessionRenewer', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/dashdevs/AlamofireSessionRenewer.git', :tag => s.version.to_s }
 
   s.source_files = 'AlamofireSessionRenewer/Classes/**/*'
   
