@@ -1,11 +1,16 @@
+source 'https://github.com/CocoaPods/Specs.git'
+
+platform :ios, '11.0'
+
 use_frameworks!
+inhibit_all_warnings!
 
 target 'AlamofireSessionRenewer_Example' do
   pod 'AlamofireSessionRenewer', :path => '../'
 
-  target 'AlamofireSessionRenewer_Tests' do
-    inherit! :search_paths
+  pod 'Alamofire'
 
-    
+  target 'AlamofireSessionRenewer_Tests' do
+    inherit! :search_paths    
   end
 end

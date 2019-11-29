@@ -1,0 +1,6 @@
+framework module AlamofireSessionRenewer {
+  umbrella header "AlamofireSessionRenewer-umbrella.h"
+
+  export *
+  module * { export * }
+}
