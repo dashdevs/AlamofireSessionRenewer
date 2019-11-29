@@ -50,7 +50,7 @@ extension MockURLProtocol: URLSessionDataDelegate {
         }
         
         if let durationString = task.originalRequest?.value(forHTTPHeaderField: MockDurationKey), let duration = Int(durationString) {
-            let deadline = DispatchTime.now().advanced(by: DispatchTimeInterval.seconds(duration))
+            let deadline = DispatchTime.now() + DispatchTimeInterval.seconds(duration)
             DispatchQueue.global().asyncAfter(deadline: deadline) {
                 handle(task)
             }

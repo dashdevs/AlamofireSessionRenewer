@@ -142,7 +142,7 @@ class ExampleTests: XCTestCase {
         expectation.assertForOverFulfill = true
         
         (1...10).forEach { index in
-            let deadline = DispatchTime.now().advanced(by: DispatchTimeInterval.seconds(index))
+            let deadline = DispatchTime.now() + DispatchTimeInterval.seconds(index)
             DispatchQueue.global().asyncAfter(deadline: deadline) { [weak self] in
                 let requestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/\(index)")!, duration: 1)
                 self?.sessionManager?.request(with: requestInfo).response { response in
