@@ -72,8 +72,8 @@ class ExampleTests: XCTestCase {
     }
     
     func testTwoUnauthorizedRequests() {
-        let testFirstUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/first")!, duration: 2)
-        let testSecondUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/second")!, duration: 3)
+        let testFirstUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/first")!, duration: 100)
+        let testSecondUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/second")!, duration: 300)
         var retryCount = 0
         requestsHandler?.credential = MockUnauthorizedCredential
         requestsHandler?.renewCredential = { success, failure in
@@ -132,7 +132,7 @@ class ExampleTests: XCTestCase {
         requestsHandler?.credential = MockUnauthorizedCredential
         requestsHandler?.renewCredential = { success, failure in
             retryCount += 1
-            DispatchQueue.global().asyncAfter(deadline: .now() + 3) {
+            DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
                 success(MockAuthorizedCredential)
             }
         }
@@ -142,9 +142,9 @@ class ExampleTests: XCTestCase {
         expectation.assertForOverFulfill = true
         
         (1...10).forEach { index in
-            let deadline = DispatchTime.now() + DispatchTimeInterval.seconds(index)
+            let deadline = DispatchTime.now() + DispatchTimeInterval.milliseconds(index * 100)
             DispatchQueue.global().asyncAfter(deadline: deadline) { [weak self] in
-                let requestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/\(index)")!, duration: 1)
+                let requestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/\(index)")!, duration: 100)
                 self?.sessionManager?.request(with: requestInfo).response { response in
                     XCTAssertNotNil(response.response)
                     XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
