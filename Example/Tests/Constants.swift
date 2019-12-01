@@ -12,3 +12,4 @@ let MockDurationKey = "Duration"
 let MockAuthenticationFailureCode = 401
 let MockAuthenticationSuccessCode = 200
 let MockMaxRetryCount: UInt = 1
+let errorDomain = "com.example.error"
