@@ -70,7 +70,7 @@ open class AlamofireSessionRenewer: RequestRetrier {
     // MARK: - RequestRetrier protocol implementation
     
     public func should(_ manager: SessionManager, retry request: Request, with error: Error, completion: @escaping RequestRetryCompletion) {
-        if (error as NSError).domain == errorDomain, (error as NSError).code == authenticationErrorCode {
+        if credential != nil, (error as NSError).domain == errorDomain, (error as NSError).code == authenticationErrorCode {
             if let maxRetryCount = maxRetryCount, maxRetryCount <= request.retryCount {
                 completion(false, 0)
                 return
