@@ -28,6 +28,9 @@ open class AlamofireSessionRenewer: RequestRetrier {
     /// Queue which stores requests to retry
     open var queue = SafeQueue()
     
+    /// Error domain indicating request we should retry
+    open var errorDomain: String
+    
     /// Closure which is called when authentication credentials renewing process finishes
     open var renewCredential: ((@escaping SuccessRenewHandler, @escaping FailureRenewHandler) -> Void)?
     
@@ -47,10 +50,11 @@ open class AlamofireSessionRenewer: RequestRetrier {
         }
     }
     
-    public init(authenticationErrorCode: Int = 401, credentialHeaderField: String = "Authorization", maxRetryCount: UInt? = nil) {
+    public init(authenticationErrorCode: Int = 401, credentialHeaderField: String = "Authorization", maxRetryCount: UInt? = nil, errorDomain: String) {
         self.authenticationErrorCode = authenticationErrorCode
         self.credentialHeaderField = credentialHeaderField
         self.maxRetryCount = maxRetryCount
+        self.errorDomain = errorDomain
     }
         
     /// Method checks whether request contains authentication credentials or not
@@ -66,7 +70,7 @@ open class AlamofireSessionRenewer: RequestRetrier {
     // MARK: - RequestRetrier protocol implementation
     
     public func should(_ manager: SessionManager, retry request: Request, with error: Error, completion: @escaping RequestRetryCompletion) {
-        if (error as NSError).code == authenticationErrorCode {
+        if (error as NSError).domain == errorDomain, (error as NSError).code == authenticationErrorCode {
             if let maxRetryCount = maxRetryCount, maxRetryCount <= request.retryCount {
                 completion(false, 0)
                 return

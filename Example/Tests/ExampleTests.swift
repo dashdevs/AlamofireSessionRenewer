@@ -18,7 +18,7 @@ class ExampleTests: XCTestCase {
         let sessionConfiguration = URLSessionConfiguration.default
         sessionConfiguration.protocolClasses = [MockURLProtocol.self]
         sessionManager = SessionManager(configuration: sessionConfiguration)
-        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: MockMaxRetryCount)
+        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: MockMaxRetryCount, errorDomain: errorDomain)
         sessionManager?.retrier = requestsHandler
         sessionManager?.adapter = requestsHandler
     }
@@ -102,7 +102,7 @@ class ExampleTests: XCTestCase {
     }
     
     func testRetryCount() {
-        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5)
+        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: errorDomain)
         sessionManager?.retrier = requestsHandler
         sessionManager?.adapter = requestsHandler
         
@@ -154,6 +154,31 @@ class ExampleTests: XCTestCase {
             }
         }
 
+        wait(for: [expectation], timeout: 30)
+    }
+    
+    func testErrorDomain() {
+        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: "com.test.errorDomain")
+        sessionManager?.retrier = requestsHandler
+        sessionManager?.adapter = requestsHandler
+        
+        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
+        var retryCount = 0
+        requestsHandler?.credential = MockUnauthorizedCredential
+        requestsHandler?.renewCredential = { success, failure in
+            success(MockAuthorizedCredential)
+            retryCount += 1
+        }
+        
+        let expectation = XCTestExpectation()
+        
+        sessionManager?.request(with: testUrlRequestInfo).response { response in
+            XCTAssertNotNil(response.response)
+            XCTAssert(response.response!.statusCode == MockAuthenticationFailureCode)
+            XCTAssert(retryCount == 0)
+            expectation.fulfill()
+        }
+        
         wait(for: [expectation], timeout: 30)
     }
 }
