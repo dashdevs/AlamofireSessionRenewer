@@ -1,9 +1,0 @@
-# .slather.yml
-
-coverage_service: cobertura_xml
-xcodeproj: Example/AlamofireSessionRenewer.xcodeproj
-scheme: AlamofireSessionRenewer-Example
-source_directory: AlamofireSessionRenewer/Classes
-output_directory: .
-ignore:
-- Example/*
