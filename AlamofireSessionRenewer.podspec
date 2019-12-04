@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AlamofireSessionRenewer'
-  s.version          = '0.2.0'
+  s.version          = '0.2.1'
   s.summary          = 'Extension that adds auth information renewal functionality to Alamofire'
 
   s.homepage         = 'https://dashdevs.com'
