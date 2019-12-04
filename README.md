@@ -1,7 +1,7 @@
 # AlamofireSessionRenewer
 
 [![CI Status](https://img.shields.io/travis/dashdevs/AlamofireSessionRenewer.svg?style=flat)](https://travis-ci.com/dashdevs/AlamofireSessionRenewer)
-[![codecov.io](https://codecov.io/gh/dashdevs/AlamofireSessionRenewer/coverage.svg?branch=master)](https://codecov.io/gh/dashdevs/AlamofireSessionRenewer?branch=master)
+[![codecov](https://codecov.io/gh/dashdevs/AlamofireSessionRenewer/branch/master/graph/badge.svg)](https://codecov.io/gh/dashdevs/AlamofireSessionRenewer)
 [![Version](https://img.shields.io/cocoapods/v/AlamofireSessionRenewer.svg?style=flat)](https://cocoapods.org/pods/AlamofireSessionRenewer)
 [![License](https://img.shields.io/cocoapods/l/AlamofireSessionRenewer.svg?style=flat)](https://cocoapods.org/pods/AlamofireSessionRenewer)
 [![Platform](https://img.shields.io/cocoapods/p/AlamofireSessionRenewer.svg?style=flat)](https://cocoapods.org/pods/AlamofireSessionRenewer)
