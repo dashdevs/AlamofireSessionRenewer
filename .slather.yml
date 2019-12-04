@@ -3,8 +3,7 @@
 coverage_service: cobertura_xml
 xcodeproj: Example/AlamofireSessionRenewer.xcodeproj
 scheme: AlamofireSessionRenewer-Example
-configuration: TestedConfiguration
 source_directory: AlamofireSessionRenewer/Classes
-output_directory: path/to/xml_report
+output_directory: .
 ignore:
 - Example/*
