@@ -14,4 +14,4 @@ jobs:
         COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
       run: |
         echo Updating podspec.
-        pod trunk push <PROJECT_NAME>.podspec
+        pod trunk push AlamofireSessionRenewer.podspec
