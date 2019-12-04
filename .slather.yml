@@ -7,4 +7,4 @@ configuration: TestedConfiguration
 source_directory: AlamofireSessionRenewer/Classes
 output_directory: path/to/xml_report
 ignore:
-  - Example/*
+- Example/*
