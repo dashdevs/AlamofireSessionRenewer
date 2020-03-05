@@ -8,7 +8,7 @@
 import Alamofire
 
 public typealias SuccessRenewHandler = (String) -> Void
-public typealias FailureRenewHandler = () -> Void
+public typealias FailureRenewHandler = (Bool) -> Void
 
 /// This class is responsible for authentication credentials renewing process
 open class AlamofireSessionRenewer: RequestRetrier {
@@ -39,8 +39,8 @@ open class AlamofireSessionRenewer: RequestRetrier {
         self?.queue.fullfill(with: true)
     }
     
-    private lazy var failureRenewHandler: FailureRenewHandler = { [weak self] in
-        self?.credential = nil
+    private lazy var failureRenewHandler: FailureRenewHandler = { [weak self] needsToClearCredential in
+        if needsToClearCredential { self?.credential = nil }
         self?.queue.fullfill(with: false)
     }
     
