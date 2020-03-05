@@ -181,4 +181,37 @@ class ExampleTests: XCTestCase {
         
         wait(for: [expectation], timeout: 30)
     }
+    func testFailureRenewWithCleanCred() {
+        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
+        requestsHandler?.credential = MockUnauthorizedCredential
+        requestsHandler?.renewCredential = { success, failure in
+            failure(true)
+        }
+        
+        let expectation = XCTestExpectation()
+        
+        sessionManager?.request(with: testUrlRequestInfo).response { [weak self] response in
+            XCTAssertNil(self?.requestsHandler?.credential)
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 30)
+    }
+    
+    func testFailureRenewWithoutCleanCred() {
+        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
+        requestsHandler?.credential = MockUnauthorizedCredential
+        requestsHandler?.renewCredential = { success, failure in
+            failure(false)
+        }
+        
+        let expectation = XCTestExpectation()
+        
+        sessionManager?.request(with: testUrlRequestInfo).response { [weak self] response in
+            XCTAssertNotNil(self?.requestsHandler?.credential)
+            expectation.fulfill()
+        }
+        
+        wait(for: [expectation], timeout: 30)
+    }
 }
