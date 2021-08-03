@@ -74,13 +74,19 @@ open class AlamofireSessionRenewer: RequestInterceptor {
     
     // Mark: - RequestAdapter
     
-    public func adapt(_ urlRequest: URLRequest, for session: Session, completion: @escaping (Result<URLRequest, Error>) -> Void) {
-        completion(.success(urlRequest))
+    open func adapt(_ urlRequest: URLRequest, for session: Session, completion: @escaping (Result<URLRequest, Error>) -> Void) {
+        guard let cred = credential else {
+            completion(.success(urlRequest))
+            return
+        }
+        var updatedRequest = urlRequest
+        updatedRequest.setValue(cred, forHTTPHeaderField: credentialHeaderField)
+        completion(.success(updatedRequest))
     }
     
     // MARK: - RequestRetrier
     
-    public func retry(_ request: Request,
+    open func retry(_ request: Request,
                       for session: Session,
                       dueTo error: Error,
                       completion: @escaping (RetryResult) -> Void) {

@@ -17,6 +17,5 @@ class MockRequestsHandler: AlamofireSessionRenewer {
         var updatedRequest = urlRequest
         updatedRequest.setValue(cred, forHTTPHeaderField: credentialHeaderField)
         completion(.success(updatedRequest))
-
     }
 }
