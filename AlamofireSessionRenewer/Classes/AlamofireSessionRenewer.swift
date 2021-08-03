@@ -5,13 +5,14 @@
 //  Copyright © 2019 DashDevs LLC. All rights reserved.
 //
 
+import Foundation
 import Alamofire
 
 public typealias SuccessRenewHandler = (String) -> Void
 public typealias FailureRenewHandler = (Bool) -> Void
 
 /// This class is responsible for authentication credentials renewing process
-open class AlamofireSessionRenewer: RequestRetrier {
+open class AlamofireSessionRenewer: RequestInterceptor {
     
     /// Error code indicating request is missing authentication info. Defaults to HTTP code 401
     public let authenticationErrorCode: Int
@@ -36,15 +37,15 @@ open class AlamofireSessionRenewer: RequestRetrier {
     
     private lazy var successRenewHandler: SuccessRenewHandler = { [weak self] credential in
         self?.credential = credential
-        self?.queue.fullfill(with: true)
+        self?.queue.fullfill(with: .retry)
     }
     
     private lazy var failureRenewHandler: FailureRenewHandler = { [weak self] needsToClearCredential in
         if needsToClearCredential { self?.credential = nil }
-        self?.queue.fullfill(with: false)
+        self?.queue.fullfill(with: .doNotRetry)
     }
     
-    private func addToQueue(requestRetryCompletion: @escaping RequestRetryCompletion) {
+    private func addToQueue(requestRetryCompletion: @escaping (RetryResult) -> Void) {
         if queue.add(requestRetryCompletion: requestRetryCompletion) == 1 {
             renewCredential?(successRenewHandler, failureRenewHandler)
         }
@@ -71,22 +72,34 @@ open class AlamofireSessionRenewer: RequestRetrier {
         return credential == nil
     }
     
-    // MARK: - RequestRetrier protocol implementation
+    // Mark: - RequestAdapter
     
-    open func should(_ manager: SessionManager, retry request: Request, with error: Error, completion: @escaping RequestRetryCompletion) {
-        if !isCredentialEmpty(), (error as NSError).domain == errorDomain, (error as NSError).code == authenticationErrorCode {
-            if let maxRetryCount = maxRetryCount, maxRetryCount <= request.retryCount {
-                completion(false, 0)
-                return
-            }
-            
-            if isCredentialEqual(to: request) {
-                addToQueue(requestRetryCompletion: completion)
-            } else {
-                completion(true, 0)
-            }
+    public func adapt(_ urlRequest: URLRequest, for session: Session, completion: @escaping (Result<URLRequest, Error>) -> Void) {
+        completion(.success(urlRequest))
+    }
+    
+    // MARK: - RequestRetrier
+    
+    public func retry(_ request: Request,
+                      for session: Session,
+                      dueTo error: Error,
+                      completion: @escaping (RetryResult) -> Void) {
+        let underlyingError = error.asAFError?.underlyingError as? NSError
+        guard !isCredentialEmpty(),
+              let error = underlyingError,
+              error.domain == errorDomain,
+              error.code == authenticationErrorCode else {
+            completion(.doNotRetry)
+            return
+        }
+        if let maxRetryCount = maxRetryCount, maxRetryCount <= request.retryCount {
+            completion(.doNotRetryWithError(error))
+            return
+        }
+        if isCredentialEqual(to: request) {
+            addToQueue(requestRetryCompletion: completion)
         } else {
-            completion(false, 0)
+            completion(.retry)
         }
     }
 }
