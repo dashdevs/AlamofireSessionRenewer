@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'AlamofireSessionRenewer'
-  s.version          = '1.0.1'
+  s.version          = '1.0.2'
   s.summary          = 'Extension that adds auth information renewal functionality to Alamofire'
 
   s.homepage         = 'https://dashdevs.com'
@@ -16,7 +16,7 @@ Pod::Spec.new do |s|
   s.author           = { 'dashdevs llc' => 'hello@dashdevs.com' }
   s.source           = { :git => 'https://github.com/dashdevs/AlamofireSessionRenewer.git', :tag => s.version.to_s }
 
-  s.source_files = 'AlamofireSessionRenewer/Classes/**/*'
+  s.source_files = 'Sources/AlamofireSessionRenewer/**/*'
   
   s.ios.deployment_target = '10.0'
   s.osx.deployment_target = '10.12'
@@ -25,5 +25,5 @@ Pod::Spec.new do |s|
   
   s.swift_versions = ['5.0', '5.1']
 
-  s.dependency 'Alamofire', '~> 4.9.1'
+  s.dependency 'Alamofire', '~> 5.4.3'
 end

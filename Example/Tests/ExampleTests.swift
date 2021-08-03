@@ -10,17 +10,15 @@ import XCTest
 import Alamofire
 
 class ExampleTests: XCTestCase {
-    var sessionManager: SessionManager?
+    var sessionManager: Session?
     var requestsHandler: MockRequestsHandler?
+    var sessionConfiguration = URLSessionConfiguration.default
     
     override func setUp() {
         super.setUp()
-        let sessionConfiguration = URLSessionConfiguration.default
         sessionConfiguration.protocolClasses = [MockURLProtocol.self]
-        sessionManager = SessionManager(configuration: sessionConfiguration)
         requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: MockMaxRetryCount, errorDomain: errorDomain)
-        sessionManager?.retrier = requestsHandler
-        sessionManager?.adapter = requestsHandler
+        sessionManager = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
     }
     
     override func tearDown() {
@@ -62,8 +60,9 @@ class ExampleTests: XCTestCase {
         let expectation = XCTestExpectation()
         
         sessionManager?.request(with: testUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.error)
-            XCTAssert((response.error as NSError?)!.code == MockAuthenticationFailureCode)
+            let error = response.error?.asAFError?.underlyingError as NSError?
+            XCTAssertNotNil(error)
+            XCTAssert(error?.code == MockAuthenticationFailureCode)
             XCTAssert(retryCount == 1)
             expectation.fulfill()
         }
@@ -103,8 +102,7 @@ class ExampleTests: XCTestCase {
     
     func testRetryCount() {
         requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: errorDomain)
-        sessionManager?.retrier = requestsHandler
-        sessionManager?.adapter = requestsHandler
+        let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
         
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 0)
         var retryCount = 0
@@ -116,9 +114,10 @@ class ExampleTests: XCTestCase {
         
         let expectation = XCTestExpectation()
         
-        sessionManager?.request(with: testUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.error)
-            XCTAssert((response.error as NSError?)!.code == MockAuthenticationFailureCode)
+        session.request(with: testUrlRequestInfo).response { response in
+            let error = response.error?.asAFError?.underlyingError as NSError?
+            XCTAssertNotNil(error)
+            XCTAssert(error?.code == MockAuthenticationFailureCode)
             XCTAssert(retryCount == 5)
             expectation.fulfill()
         }
@@ -159,8 +158,7 @@ class ExampleTests: XCTestCase {
     
     func testErrorDomain() {
         requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: "com.test.errorDomain")
-        sessionManager?.retrier = requestsHandler
-        sessionManager?.adapter = requestsHandler
+        let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
         
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
         var retryCount = 0
@@ -172,7 +170,7 @@ class ExampleTests: XCTestCase {
         
         let expectation = XCTestExpectation()
         
-        sessionManager?.request(with: testUrlRequestInfo).response { response in
+        session.request(with: testUrlRequestInfo).response { response in
             XCTAssertNotNil(response.response)
             XCTAssert(response.response!.statusCode == MockAuthenticationFailureCode)
             XCTAssert(retryCount == 0)
