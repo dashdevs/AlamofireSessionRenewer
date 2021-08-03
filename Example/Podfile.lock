@@ -1,6 +1,6 @@
 PODS:
   - Alamofire (5.4.3)
-  - AlamofireSessionRenewer (1.0.6):
+  - AlamofireSessionRenewer (1.0.7):
     - Alamofire (~> 5.4.3)
 
 DEPENDENCIES:
@@ -16,7 +16,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Alamofire: e447a2774a40c996748296fa2c55112fdbbc42f9
-  AlamofireSessionRenewer: 7b20f4b2dcf03142262e065cb00fc3ee5f16c4a0
+  AlamofireSessionRenewer: 466569a95bdd1504dbb0065a6f0f17a2c8fa913d
 
 PODFILE CHECKSUM: 6589593e3521dca72737fa2f8639cb15cca08528
 
