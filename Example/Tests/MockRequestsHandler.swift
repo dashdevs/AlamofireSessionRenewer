@@ -8,11 +8,15 @@
 @testable import AlamofireSessionRenewer
 import Alamofire
 
-class MockRequestsHandler: AlamofireSessionRenewer, RequestAdapter {
-    func adapt(_ urlRequest: URLRequest) throws -> URLRequest {
-        guard let cred = credential else { return urlRequest }
+class MockRequestsHandler: AlamofireSessionRenewer {
+    override func adapt(_ urlRequest: URLRequest, for session: Session, completion: @escaping (Result<URLRequest, Error>) -> Void) {
+        guard let cred = credential else {
+            completion(.success(urlRequest))
+            return
+        }
         var updatedRequest = urlRequest
         updatedRequest.setValue(cred, forHTTPHeaderField: credentialHeaderField)
-        return updatedRequest
+        completion(.success(updatedRequest))
+
     }
 }
