@@ -1,6 +1,6 @@
 {
   "name": "AlamofireSessionRenewer",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "summary": "Extension that adds auth information renewal functionality to Alamofire",
   "homepage": "https://dashdevs.com",
   "license": {
@@ -12,7 +12,7 @@
   },
   "source": {
     "git": "https://github.com/dashdevs/AlamofireSessionRenewer.git",
-    "tag": "1.0.7"
+    "tag": "1.0.8"
   },
   "source_files": "Sources/AlamofireSessionRenewer/**/*",
   "platforms": {

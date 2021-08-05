@@ -11,13 +11,13 @@ import Alamofire
 
 class ExampleTests: XCTestCase {
     var sessionManager: Session?
-    var requestsHandler: MockRequestsHandler?
+    var requestsHandler: AlamofireSessionRenewer?
     var sessionConfiguration = URLSessionConfiguration.default
     
     override func setUp() {
         super.setUp()
         sessionConfiguration.protocolClasses = [MockURLProtocol.self]
-        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: MockMaxRetryCount, errorDomain: errorDomain)
+        requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: MockMaxRetryCount, errorDomain: errorDomain)
         sessionManager = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
     }
     
@@ -101,7 +101,7 @@ class ExampleTests: XCTestCase {
     }
     
     func testRetryCount() {
-        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: errorDomain)
+        requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: errorDomain)
         let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
         
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 0)
@@ -157,7 +157,7 @@ class ExampleTests: XCTestCase {
     }
     
     func testErrorDomain() {
-        requestsHandler = MockRequestsHandler(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: "com.test.errorDomain")
+        requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: "com.test.errorDomain")
         let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
         
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)

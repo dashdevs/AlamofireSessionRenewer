@@ -10,6 +10,7 @@ import Alamofire
 
 public typealias SuccessRenewHandler = (String) -> Void
 public typealias FailureRenewHandler = (Bool) -> Void
+public typealias RenewCredentialHandler = ((@escaping SuccessRenewHandler, @escaping FailureRenewHandler) -> Void)
 
 /// This class is responsible for authentication credentials renewing process
 open class AlamofireSessionRenewer: RequestInterceptor {
@@ -33,7 +34,7 @@ open class AlamofireSessionRenewer: RequestInterceptor {
     open var errorDomain: String
     
     /// Closure which is called when authentication credentials renewing process finishes
-    open var renewCredential: ((@escaping SuccessRenewHandler, @escaping FailureRenewHandler) -> Void)?
+    open var renewCredential: RenewCredentialHandler?
     
     private lazy var successRenewHandler: SuccessRenewHandler = { [weak self] credential in
         self?.credential = credential
