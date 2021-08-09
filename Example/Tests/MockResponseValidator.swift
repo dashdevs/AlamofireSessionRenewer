@@ -13,6 +13,6 @@ func MockResponseValidator(request: URLRequest?, response: HTTPURLResponse, data
     case 400...Int.max:
         return .failure(NSError(domain: errorDomain, code: response.statusCode, userInfo: nil))
     default:
-        return .success
+        return .success(Void())
     }
 }

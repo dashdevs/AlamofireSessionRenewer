@@ -15,7 +15,6 @@
 		607FACE01AFB9204008FA782 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDE1AFB9204008FA782 /* LaunchScreen.xib */; };
 		80460918C1CCCBFC4AB5A4D8 /* Pods_AlamofireSessionRenewer_Example.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DFA7965DFBF9F83CD57EE860 /* Pods_AlamofireSessionRenewer_Example.framework */; };
 		E8099B8823913C3C00D522B4 /* SessionManager+RequestMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8099B8123913C3B00D522B4 /* SessionManager+RequestMock.swift */; };
-		E8099B8923913C3C00D522B4 /* MockRequestsHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8099B8223913C3B00D522B4 /* MockRequestsHandler.swift */; };
 		E8099B8A23913C3C00D522B4 /* MockURLProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8099B8323913C3B00D522B4 /* MockURLProtocol.swift */; };
 		E8099B8B23913C3C00D522B4 /* MockResponseValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8099B8423913C3B00D522B4 /* MockResponseValidator.swift */; };
 		E8099B8C23913C3C00D522B4 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8099B8523913C3C00D522B4 /* Constants.swift */; };
@@ -53,7 +52,6 @@
 		C4AD9D5B6F8E049E5EF05770 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		DFA7965DFBF9F83CD57EE860 /* Pods_AlamofireSessionRenewer_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_AlamofireSessionRenewer_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8099B8123913C3B00D522B4 /* SessionManager+RequestMock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "SessionManager+RequestMock.swift"; sourceTree = "<group>"; };
-		E8099B8223913C3B00D522B4 /* MockRequestsHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockRequestsHandler.swift; sourceTree = "<group>"; };
 		E8099B8323913C3B00D522B4 /* MockURLProtocol.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockURLProtocol.swift; sourceTree = "<group>"; };
 		E8099B8423913C3B00D522B4 /* MockResponseValidator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockResponseValidator.swift; sourceTree = "<group>"; };
 		E8099B8523913C3C00D522B4 /* Constants.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
@@ -130,7 +128,6 @@
 			children = (
 				E8099B8523913C3C00D522B4 /* Constants.swift */,
 				E8099B8623913C3C00D522B4 /* ExampleTests.swift */,
-				E8099B8223913C3B00D522B4 /* MockRequestsHandler.swift */,
 				E8099B8423913C3B00D522B4 /* MockResponseValidator.swift */,
 				E8099B8323913C3B00D522B4 /* MockURLProtocol.swift */,
 				E8099B8723913C3C00D522B4 /* MockURLRequestInfo.swift */,
@@ -367,7 +364,6 @@
 				E8099B8A23913C3C00D522B4 /* MockURLProtocol.swift in Sources */,
 				E8099B8D23913C3C00D522B4 /* ExampleTests.swift in Sources */,
 				E8099B8B23913C3C00D522B4 /* MockResponseValidator.swift in Sources */,
-				E8099B8923913C3C00D522B4 /* MockRequestsHandler.swift in Sources */,
 				E8099B8823913C3C00D522B4 /* SessionManager+RequestMock.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

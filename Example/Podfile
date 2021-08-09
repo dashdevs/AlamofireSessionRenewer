@@ -8,8 +8,6 @@ inhibit_all_warnings!
 target 'AlamofireSessionRenewer_Example' do
   pod 'AlamofireSessionRenewer', :path => '../'
 
-  pod 'Alamofire'
-
   target 'AlamofireSessionRenewer_Tests' do
     inherit! :search_paths    
   end

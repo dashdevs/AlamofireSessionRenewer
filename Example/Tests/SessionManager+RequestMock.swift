@@ -8,7 +8,7 @@
 @testable import AlamofireSessionRenewer
 import Alamofire
 
-extension SessionManager {
+extension Session {
     func request(with requestInfo: MockURLRequestInfo) -> DataRequest {
         let headers: HTTPHeaders = [
             MockDurationKey: String(requestInfo.duration)

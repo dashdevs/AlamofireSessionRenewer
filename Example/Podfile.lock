@@ -1,10 +1,9 @@
 PODS:
-  - Alamofire (4.9.1)
-  - AlamofireSessionRenewer (1.0.9):
-    - Alamofire (~> 4.9.1)
+  - Alamofire (5.4.3)
+  - AlamofireSessionRenewer (2.0.0):
+    - Alamofire (~> 5.4.3)
 
 DEPENDENCIES:
-  - Alamofire
   - AlamofireSessionRenewer (from `../`)
 
 SPEC REPOS:
@@ -16,9 +15,9 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
-  AlamofireSessionRenewer: 69a91669463e5f63338a2f47656163d91693f166
+  Alamofire: e447a2774a40c996748296fa2c55112fdbbc42f9
+  AlamofireSessionRenewer: a05a9ef3151d36716342374460d2086ad810eaad
 
-PODFILE CHECKSUM: e3ff5db97c900fee285574f6a40c0cf7d79584d4
+PODFILE CHECKSUM: 6589593e3521dca72737fa2f8639cb15cca08528
 
 COCOAPODS: 1.10.2
