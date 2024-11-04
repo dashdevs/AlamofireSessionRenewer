@@ -10,7 +10,7 @@ let package = Package(
         .library(name: "AlamofireSessionRenewer", targets: ["AlamofireSessionRenewer"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.4.3"))
+        .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.10.1"))
     ],
     targets: [
         .target(name: "AlamofireSessionRenewer", dependencies: ["Alamofire"]),
