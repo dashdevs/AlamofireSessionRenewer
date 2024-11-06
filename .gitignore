@@ -20,12 +20,10 @@ DerivedData
 *.ipa
 
 # Swift Package Manager
-Package.resolved
 .swiftpm/
 
 # Example project CocoaPods files
 Example/Pods/
-Example/Podfile.lock
 
 # Bundler
 .bundle
