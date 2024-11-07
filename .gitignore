@@ -19,6 +19,12 @@ DerivedData
 *.hmap
 *.ipa
 
+# Swift Package Manager
+.swiftpm/
+
+# Example project CocoaPods files
+Example/Pods/
+
 # Bundler
 .bundle
 

@@ -1,5 +1,5 @@
 PODS:
-  - Alamofire (5.4.3)
+  - Alamofire (5.4.4)
   - AlamofireSessionRenewer (2.0.0):
     - Alamofire (~> 5.4.3)
 
@@ -15,9 +15,9 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  Alamofire: e447a2774a40c996748296fa2c55112fdbbc42f9
+  Alamofire: f3b09a368f1582ab751b3fff5460276e0d2cf5c9
   AlamofireSessionRenewer: a05a9ef3151d36716342374460d2086ad810eaad
 
 PODFILE CHECKSUM: 6589593e3521dca72737fa2f8639cb15cca08528
 
-COCOAPODS: 1.10.2
+COCOAPODS: 1.16.2
