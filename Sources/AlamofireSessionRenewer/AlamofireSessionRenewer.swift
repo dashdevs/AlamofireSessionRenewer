@@ -13,12 +13,7 @@ public typealias FailureRenewHandler = (Bool) -> Void
 public typealias RenewCredentialHandler = ((@escaping SuccessRenewHandler, @escaping FailureRenewHandler) -> Void)
 
 /// This class is responsible for authentication credentials renewing process
-open class AlamofireSessionRenewer: RequestInterceptor, @unchecked Sendable {
-    /// Lock for ensuring thread-safe access to `credential`
-    private let lock = NSLock()
-    
-    /// Private backing variable for credential
-    private var _credential: String?
+open class AlamofireSessionRenewer: RequestInterceptor {
     
     /// Error code indicating request is missing authentication info. Defaults to HTTP code 401
     public let authenticationErrorCode: Int
@@ -29,6 +24,9 @@ open class AlamofireSessionRenewer: RequestInterceptor, @unchecked Sendable {
     /// Number of times to retry credentials renewing process upper limit
     public let maxRetryCount: UInt?
     
+    /// Authentication information unit
+    open var credential: String?
+    
     /// Queue which stores requests to retry
     open var queue = SafeQueue()
     
@@ -37,20 +35,6 @@ open class AlamofireSessionRenewer: RequestInterceptor, @unchecked Sendable {
     
     /// Closure which is called when authentication credentials renewing process finishes
     open var renewCredential: RenewCredentialHandler?
-    
-    /// Credential used for authentication
-    open var credential: String? {
-        get {
-            lock.lock()
-            defer { lock.unlock() }
-            return _credential
-        }
-        set {
-            lock.lock()
-            defer { lock.unlock() }
-            _credential = newValue
-        }
-    }
     
     private lazy var successRenewHandler: SuccessRenewHandler = { [weak self] credential in
         self?.credential = credential
