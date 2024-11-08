@@ -111,12 +111,6 @@ extension AlamofireSessionRenewer {
         self.renewCredential = handler
     }
     
-    /// Retrieves the maximum number of retry attempts allowed.
-    /// - Returns: The maximum retry count, if any.
-    public func getMaxRetryCount() async -> UInt? {
-        self.maxRetryCount
-    }
-    
     /// Checks if the current credential is empty.
     /// - Returns: True if no credential is set, false otherwise.
     public func isCredentialEmpty() async -> Bool {
