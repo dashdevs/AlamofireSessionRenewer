@@ -27,189 +27,164 @@ class ExampleTests: XCTestCase {
         requestsHandler = nil
     }
     
-    func testOneSuccessedRequest() {
+    func testOneSuccessedRequest() async {
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockAuthorizedCredential)
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { success, failure in
+            await success(MockAuthorizedCredential)
             retryCount += 1
         }
         
-        let expectation = XCTestExpectation()
+        let response = await sessionManager?.request(with: testUrlRequestInfo)
         
-        sessionManager?.request(with: testUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
+        XCTAssertNotNil(response?.response)
+        XCTAssertEqual(response?.response?.statusCode, MockAuthenticationSuccessCode)
+        XCTAssertEqual(retryCount, 1)
     }
     
-    func testOneFailedRequest() {
+    func testOneFailedRequest() async {
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockUnauthorizedCredential)
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { success, failure in
+            await success(MockUnauthorizedCredential)
             retryCount += 1
         }
         
-        let expectation = XCTestExpectation()
+        let response = await sessionManager?.request(with: testUrlRequestInfo)
         
-        sessionManager?.request(with: testUrlRequestInfo).response { response in
-            let error = response.error?.asAFError?.underlyingError as NSError?
-            XCTAssertNotNil(error)
-            XCTAssert(error?.code == MockAuthenticationFailureCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
+        let error = response?.error?.asAFError?.underlyingError as NSError?
+        XCTAssertNotNil(error)
+        XCTAssertEqual(response?.response?.statusCode, MockAuthenticationFailureCode)
+        XCTAssertEqual(retryCount, 1)
     }
     
-    func testTwoUnauthorizedRequests() {
+    func testTwoUnauthorizedRequests() async {
         let testFirstUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/first")!, duration: 100)
         let testSecondUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/second")!, duration: 300)
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockAuthorizedCredential)
+        
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { success, _ in
+            await success(MockAuthorizedCredential)
             retryCount += 1
         }
         
-        let expectation = XCTestExpectation()
-        expectation.expectedFulfillmentCount = 2
+        let firstResponse = await sessionManager?.request(with: testFirstUrlRequestInfo)
+        XCTAssertNotNil(firstResponse?.response)
+        XCTAssertEqual(firstResponse?.response?.statusCode, MockAuthenticationSuccessCode)
+        XCTAssertEqual(retryCount, 1)
         
-        sessionManager?.request(with: testFirstUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        sessionManager?.request(with: testSecondUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
+        let secondResponse = await sessionManager?.request(with: testSecondUrlRequestInfo)
+        XCTAssertNotNil(secondResponse?.response)
+        XCTAssertEqual(secondResponse?.response?.statusCode, MockAuthenticationSuccessCode)
+        XCTAssertEqual(retryCount, 1)
     }
     
-    func testRetryCount() {
+    func testRetryCount() async {
         requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: errorDomain)
         let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
         
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 0)
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockUnauthorizedCredential)
+        
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { success, _ in
+            await success(MockUnauthorizedCredential)
             retryCount += 1
         }
         
-        let expectation = XCTestExpectation()
+        let response = await session.request(with: testUrlRequestInfo)
         
-        session.request(with: testUrlRequestInfo).response { response in
-            let error = response.error?.asAFError?.underlyingError as NSError?
-            XCTAssertNotNil(error)
-            XCTAssert(error?.code == MockAuthenticationFailureCode)
-            XCTAssert(retryCount == 5)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
+        let error = response.error?.asAFError?.underlyingError as NSError?
+        XCTAssertNotNil(error)
+        XCTAssertEqual(response.response?.statusCode, MockAuthenticationFailureCode)
+        XCTAssertEqual(retryCount, 5)
     }
     
-    func testManyUnauthorizedRequests() {
+    func testManyUnauthorizedRequests() async {
         var retryCount = 0
         
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { success, _ in
             retryCount += 1
-            DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
-                success(MockAuthorizedCredential)
-            }
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            await success(MockAuthorizedCredential)
         }
         
-        let expectation = XCTestExpectation()
-        expectation.expectedFulfillmentCount = 10
-        expectation.assertForOverFulfill = true
-        
-        (1...10).forEach { index in
-            let deadline = DispatchTime.now() + DispatchTimeInterval.milliseconds(index * 100)
-            DispatchQueue.global().asyncAfter(deadline: deadline) { [weak self] in
-                let requestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/\(index)")!, duration: 100)
-                self?.sessionManager?.request(with: requestInfo).response { response in
-                    XCTAssertNotNil(response.response)
-                    XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-                    XCTAssert(retryCount == 1)
-                    expectation.fulfill()
+        let responses = await withTaskGroup(of: (Int, DataResponse<Data?, AFError>?).self) { group in
+            for index in 1...10 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64(index * 100_000_000))
+                    let requestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/\(index)")!, duration: 100)
+                    let response = await self.sessionManager?.request(with: requestInfo)
+                    return (index, response)
                 }
             }
+            
+            var resultList = [(Int, DataResponse<Data?, AFError>?)]()
+            for await result in group {
+                resultList.append(result)
+            }
+            return resultList
         }
-
-        wait(for: [expectation], timeout: 30)
+        
+        for (index, response) in responses {
+            XCTAssertNotNil(response?.response, "Response for request \(index) is nil")
+            XCTAssertEqual(response?.response?.statusCode, MockAuthenticationSuccessCode, "Status code for request \(index) is not 200")
+        }
+        
+        XCTAssertEqual(retryCount, 1, "Retry count should be 1")
     }
     
-    func testErrorDomain() {
+    func testErrorDomain() async {
         requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: "com.test.errorDomain")
         let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
         
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockAuthorizedCredential)
+        
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { success, _ in
+            await success(MockAuthorizedCredential)
             retryCount += 1
         }
         
-        let expectation = XCTestExpectation()
+        let response = await session.request(with: testUrlRequestInfo)
         
-        session.request(with: testUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationFailureCode)
-            XCTAssert(retryCount == 0)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
-    }
-    func testFailureRenewWithCleanCred() {
-        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            failure(true)
-        }
-        
-        let expectation = XCTestExpectation()
-        
-        sessionManager?.request(with: testUrlRequestInfo).response { [weak self] response in
-            XCTAssertNil(self?.requestsHandler?.credential)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
+        XCTAssertNotNil(response.response)
+        XCTAssertEqual(response.response?.statusCode, MockAuthenticationFailureCode)
+        XCTAssertEqual(retryCount, 0, "Retry count should be 0 as the error domain does not match")
     }
     
-    func testFailureRenewWithoutCleanCred() {
+    func testFailureRenewWithCleanCred() async {
         let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            failure(false)
+        
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { _, failure in
+            await failure(true)
         }
         
-        let expectation = XCTestExpectation()
+        let response = await sessionManager?.request(with: testUrlRequestInfo)
         
-        sessionManager?.request(with: testUrlRequestInfo).response { [weak self] response in
-            XCTAssertNotNil(self?.requestsHandler?.credential)
-            expectation.fulfill()
+        let currentCredential = await requestsHandler?.getCredential()
+        XCTAssertNil(currentCredential)
+        XCTAssertNotNil(response)
+    }
+    
+    func testFailureRenewWithoutCleanCred() async {
+        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
+        
+        await requestsHandler?.setCredential(MockUnauthorizedCredential)
+        await requestsHandler?.setRenewCredentialHandler { _, failure in
+            await failure(false)
         }
         
-        wait(for: [expectation], timeout: 30)
+        let response = await sessionManager?.request(with: testUrlRequestInfo)
+        
+        let currentCredential = await requestsHandler?.getCredential()
+        XCTAssertNotNil(currentCredential)
+        XCTAssertNotNil(response)
     }
 }

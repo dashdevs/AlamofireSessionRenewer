@@ -9,10 +9,16 @@
 import Alamofire
 
 extension Session {
-    func request(with requestInfo: MockURLRequestInfo) -> DataRequest {
+    func request(with requestInfo: MockURLRequestInfo) async -> DataResponse<Data?, AFError> {
         let headers: HTTPHeaders = [
             MockDurationKey: String(requestInfo.duration)
         ]
-        return request(requestInfo.url, headers: headers).validate(MockResponseValidator)
+        return await withCheckedContinuation { continuation in
+            request(requestInfo.url, headers: headers)
+                .validate(MockResponseValidator)
+                .response { response in
+                    continuation.resume(returning: response)
+                }
+        }
     }
 }
