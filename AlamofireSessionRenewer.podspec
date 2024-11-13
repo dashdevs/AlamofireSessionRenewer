@@ -20,10 +20,10 @@ Pod::Spec.new do |s|
   
   s.ios.deployment_target = '13.0'
   s.osx.deployment_target = '10.15'
-  s.tvos.deployment_target = '10.0'
-  s.watchos.deployment_target = '3.0'
+  s.tvos.deployment_target = '12.0'
+  s.watchos.deployment_target = '4.0'
   
-  s.swift_versions = ['5.0', '5.1']
+  s.swift_versions = ['6.0']
 
   s.dependency 'Alamofire', '~> 5.4.3'
 end

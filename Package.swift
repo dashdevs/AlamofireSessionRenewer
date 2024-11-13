@@ -1,11 +1,11 @@
-// swift-tools-version:5.3
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
 
 let package = Package(
     name: "AlamofireSessionRenewer",
-    platforms: [.macOS(.v10_15), .iOS(.v13), .tvOS(.v10), .watchOS(.v3)],
+    platforms: [.macOS(.v10_15), .iOS(.v13), .tvOS(.v12), .watchOS(.v4)],
     products: [
         .library(name: "AlamofireSessionRenewer", targets: ["AlamofireSessionRenewer"]),
     ],
@@ -16,5 +16,5 @@ let package = Package(
         .target(name: "AlamofireSessionRenewer", dependencies: ["Alamofire"]),
         .testTarget( name: "AlamofireSessionRenewerTests", dependencies: ["AlamofireSessionRenewer"]),
     ],
-    swiftLanguageVersions: [.v5]
+    swiftLanguageModes: [.v6]
 )
