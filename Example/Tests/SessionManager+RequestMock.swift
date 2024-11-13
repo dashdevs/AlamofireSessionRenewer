@@ -17,7 +17,16 @@ extension Session {
             request(requestInfo.url, headers: headers)
                 .validate(MockResponseValidator)
                 .response { response in
-                    continuation.resume(returning: response)
+                    let dataResponse = DataResponse<Data?, AFError>(
+                        request: response.request,
+                        response: response.response,
+                        data: response.data,
+                        metrics: response.metrics,
+                        serializationDuration: response.serializationDuration,
+                        result: response.result
+                    )
+                    
+                    continuation.resume(returning: dataResponse)
                 }
         }
     }
