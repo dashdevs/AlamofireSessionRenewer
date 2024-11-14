@@ -7,7 +7,7 @@
 
 import Foundation
 
-class MockURLProtocol: URLProtocol {
+class MockURLProtocol: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool {
         return true
     }
@@ -17,7 +17,7 @@ class MockURLProtocol: URLProtocol {
     }
     
     override func startLoading() {
-        let handle: (URLRequest) -> Void = { [weak self] request in
+        let handle: @Sendable (URLRequest) -> Void = { [weak self] request in
             guard let strongSelf = self else { return }
             let response: HTTPURLResponse
             
