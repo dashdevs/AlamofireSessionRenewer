@@ -12,7 +12,7 @@ public typealias SuccessRenewHandler = (String) async -> Void
 public typealias FailureRenewHandler = (Bool) async -> Void
 public typealias RenewCredentialHandler = ((SuccessRenewHandler, FailureRenewHandler) async -> Void)
 
-/// This class is responsible for authentication credentials renewing process
+/// That actor is responsible for authentication credentials renewing process
 final public actor AlamofireSessionRenewer: RequestInterceptor {
     
     // MARK: Properties
@@ -32,7 +32,7 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
     /// Authentication information unit
     private var credential: String?
     
-    /// Queue which stores requests to retry
+    /// An array which stores closures to retry requests after updating credentials
     private var pendingRequests: [(RetryResult) -> Void] = []
     
     /// Closure which is called when authentication credentials renewing process finishes
@@ -153,13 +153,13 @@ extension AlamofireSessionRenewer {
         completion: @escaping (RetryResult) -> Void
     ) {
         Task {
-            let underlyingError = error.asAFError?.underlyingError as! NSError
-            let isempty = await isCredentialEmpty()
-            let domain = await underlyingError.domain
+            let underlyingError = error.asAFError?.underlyingError as? NSError
+            let isEmpty = await isCredentialEmpty()
+            let underlyingErrorDomain = await underlyingError?.domain // updated variable name
             let errorDomain = await self.errorDomain
-            guard !isempty,
-                  domain == errorDomain,
-                  underlyingError.code == authenticationErrorCode else {
+            guard !isEmpty,
+                  underlyingErrorDomain == errorDomain,
+                  underlyingError?.code == authenticationErrorCode else {
                 completion(.doNotRetry)
                 return
             }
