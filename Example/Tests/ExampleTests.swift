@@ -70,15 +70,17 @@ class ExampleTests: XCTestCase {
             await success(MockAuthorizedCredential)
             retryCount += 1
         }
+        async let firstRequest = sessionManager?.request(with: testFirstUrlRequestInfo)
+        async let secondRequest = sessionManager?.request(with: testSecondUrlRequestInfo)
+        let firstResponse = await firstRequest?.response
+        let secondResponse = await secondRequest?.response
         
-        let firstResponse = await sessionManager?.request(with: testFirstUrlRequestInfo)
-        XCTAssertNotNil(firstResponse?.response)
-        XCTAssertEqual(firstResponse?.response?.statusCode, MockAuthenticationSuccessCode)
+        XCTAssertNotNil(firstResponse)
+        XCTAssertEqual(firstResponse?.statusCode, MockAuthenticationSuccessCode)
         XCTAssertEqual(retryCount, 1)
         
-        let secondResponse = await sessionManager?.request(with: testSecondUrlRequestInfo)
-        XCTAssertNotNil(secondResponse?.response)
-        XCTAssertEqual(secondResponse?.response?.statusCode, MockAuthenticationSuccessCode)
+        XCTAssertNotNil(secondResponse)
+        XCTAssertEqual(secondResponse?.statusCode, MockAuthenticationSuccessCode)
         XCTAssertEqual(retryCount, 1)
     }
     
