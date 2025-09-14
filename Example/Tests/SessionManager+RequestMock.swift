@@ -11,7 +11,7 @@ import Alamofire
 extension Session {
     func request(with requestInfo: MockURLRequestInfo) async -> DataResponse<Data?, AFError> {
         let headers: HTTPHeaders = [
-            MockDurationKey: String(requestInfo.duration)
+            TestConstants.durationKey: String(requestInfo.duration)
         ]
         return await withCheckedContinuation { continuation in
             request(requestInfo.url, headers: headers)

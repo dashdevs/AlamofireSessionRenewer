@@ -24,7 +24,7 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
     private let credentialHeaderField: String
     
     /// Number of times to retry credentials renewing process upper limit
-    private let maxRetryCount: UInt?
+    private let maxRetryCount: Int?
     
     /// Error domain indicating request we should retry
     private let errorDomain: String
@@ -65,7 +65,7 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
     public init(
         authenticationErrorCode: Int = 401,
         credentialHeaderField: String = "Authorization",
-        maxRetryCount: UInt? = nil,
+        maxRetryCount: Int? = nil,
         errorDomain: String
     ) {
         self.authenticationErrorCode = authenticationErrorCode
