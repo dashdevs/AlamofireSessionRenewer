@@ -10,7 +10,7 @@ import Alamofire
 
 public typealias SuccessRenewHandler = (String) async -> Void
 public typealias FailureRenewHandler = (Bool) async -> Void
-public typealias RenewCredentialHandler = ((SuccessRenewHandler, FailureRenewHandler) -> Void)
+public typealias RenewCredentialHandler = ((SuccessRenewHandler, FailureRenewHandler) async -> Void)
 
 /// That actor is responsible for authentication credentials renewing process
 final public actor AlamofireSessionRenewer: RequestInterceptor {
@@ -78,11 +78,11 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
     
     /// Adds a request to the pending requests queue for retrying after credential renewal.
     /// - Parameter requestRetryCompletion: The completion handler to be called with the retry result.
-    private func addToQueue(requestRetryCompletion: @escaping (RetryResult) -> Void) {
+    private func addToQueue(requestRetryCompletion: @escaping (RetryResult) -> Void) async {
         pendingRequests.append(requestRetryCompletion)
         
         if pendingRequests.count == 1 {
-            renewCredential?(successRenewHandler, failureRenewHandler)
+            await renewCredential?(successRenewHandler, failureRenewHandler)
         }
     }
     

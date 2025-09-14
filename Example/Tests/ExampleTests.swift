@@ -170,7 +170,7 @@ class ExampleTests: XCTestCase {
         
         let response = await sessionManager?.request(with: testUrlRequestInfo)
         
-        let currentCredential = await requestsHandler?.getCredential()
+        let currentCredential = await requestsHandler?.credential
         XCTAssertNil(currentCredential)
         XCTAssertNotNil(response)
     }
@@ -185,7 +185,7 @@ class ExampleTests: XCTestCase {
         
         let response = await sessionManager?.request(with: testUrlRequestInfo)
         
-        let currentCredential = await requestsHandler?.getCredential()
+        let currentCredential = await requestsHandler?.credential
         XCTAssertNotNil(currentCredential)
         XCTAssertNotNil(response)
     }
