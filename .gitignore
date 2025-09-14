@@ -3,6 +3,7 @@
 
 # Xcode
 build/
+.build/
 *.pbxuser
 !default.pbxuser
 *.mode1v3
@@ -18,6 +19,12 @@ profile
 DerivedData
 *.hmap
 *.ipa
+
+# Swift Package Manager
+.swiftpm/
+
+# Example project CocoaPods files
+Example/Pods/
 
 # Bundler
 .bundle

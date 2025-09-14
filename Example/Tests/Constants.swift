@@ -5,11 +5,13 @@
 //  Copyright © 2019 DashDevs LLC. All rights reserved.
 //
 
-let MockAuthorizedCredential = "Authorized"
-let MockUnauthorizedCredential = "Unauthorized"
-let MockCredentialHeaderField = "Authorization"
-let MockDurationKey = "Duration"
-let MockAuthenticationFailureCode = 401
-let MockAuthenticationSuccessCode = 200
-let MockMaxRetryCount: UInt = 1
-let errorDomain = "com.example.error"
+enum TestConstants {
+    static let authorizedCredential = "Authorized"
+    static let unauthorizedCredential = "Unauthorized"
+    static let credentialHeaderField = "Authorization"
+    static let durationKey = "Duration"
+    static let authenticationFailureCode = 401
+    static let authenticationSuccessCode = 200
+    static let retryCount: Int = 1
+    static let errorDomain = "com.example.error"
+}
