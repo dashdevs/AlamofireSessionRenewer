@@ -13,7 +13,7 @@ public typealias FailureRenewHandler = (Bool) async -> Void
 public typealias RenewCredentialHandler = ((SuccessRenewHandler, FailureRenewHandler) async -> Void)
 
 /// That actor is responsible for authentication credentials renewing process
-final public actor AlamofireSessionRenewer: RequestInterceptor {
+public actor AlamofireSessionRenewer: RequestInterceptor {
     
     // MARK: Properties
     
