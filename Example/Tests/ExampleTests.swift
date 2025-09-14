@@ -49,8 +49,14 @@ struct ExampleTests {
     func twoUnauthorizedRequests() async throws {
         let sut = makeSUT()
         
-        let testFirstUrlRequestInfo = MockURLRequestInfo(urlString: "http://test.com/authorization/first")
-        let testSecondUrlRequestInfo = MockURLRequestInfo(urlString: "http://test.com/authorization/second")
+        let testFirstUrlRequestInfo = MockURLRequestInfo(
+            urlString: "http://test.com/authorization/first",
+            duration: 100
+        )
+        let testSecondUrlRequestInfo = MockURLRequestInfo(
+            urlString: "http://test.com/authorization/second",
+            duration: 300
+        )
         var retryCount = 0
         await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
         await sut.requestsHandler.setRenewCredentialHandler { success, _ in
@@ -79,7 +85,7 @@ struct ExampleTests {
             retryCount += 1
         }
         
-        let response = await sut.sessionManager.request(with: MockURLRequestInfo())
+        let response = await sut.sessionManager.request(with: MockURLRequestInfo(duration: 0))
 
         let httpResponse = try #require(response.response)
         #expect(response.error != nil)
