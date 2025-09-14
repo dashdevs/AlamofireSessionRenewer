@@ -5,211 +5,205 @@
 //  Copyright © 2019 DashDevs LLC. All rights reserved.
 //
 
-import XCTest
+import Testing
 @testable import AlamofireSessionRenewer
 import Alamofire
 
-class ExampleTests: XCTestCase {
-    var sessionManager: Session?
-    var requestsHandler: AlamofireSessionRenewer?
-    var sessionConfiguration = URLSessionConfiguration.default
-    
-    override func setUp() {
-        super.setUp()
-        sessionConfiguration.protocolClasses = [MockURLProtocol.self]
-        requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: MockMaxRetryCount, errorDomain: errorDomain)
-        sessionManager = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
-    }
-    
-    override func tearDown() {
-        super.tearDown()
-        sessionManager = nil
-        requestsHandler = nil
-    }
-    
-    func testOneSuccessedRequest() {
-        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
+struct ExampleTests {
+    @Test
+    func oneSuccessedRequest() async throws {
+        let sut = makeSUT()
+        
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockAuthorizedCredential)
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { success, _ in
+            await success(TestConstants.authorizedCredential)
+            retryCount += 1
+        }
+        let response = await sut.sessionManager.request(with: MockURLRequestInfo())
+        
+        let httpResponse = try #require(response.response)
+        #expect(httpResponse.statusCode == TestConstants.authenticationSuccessCode)
+        #expect(retryCount == TestConstants.retryCount)
+    }
+    
+    @Test
+    func oneFailedRequest() async throws {
+        let sut = makeSUT()
+        
+        var retryCount = 0
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { success, _ in
+            await success(TestConstants.unauthorizedCredential)
+            retryCount += 1
+        }
+        let response = await sut.sessionManager.request(with: MockURLRequestInfo())
+        
+        let httpResponse = try #require(response.response)
+        #expect(response.error != nil)
+        #expect(httpResponse.statusCode == TestConstants.authenticationFailureCode)
+        #expect(retryCount == TestConstants.retryCount)
+    }
+    
+    @Test
+    func twoUnauthorizedRequests() async throws {
+        let sut = makeSUT()
+        
+        let testFirstUrlRequestInfo = MockURLRequestInfo(
+            urlString: "http://test.com/authorization/first",
+            duration: 100
+        )
+        let testSecondUrlRequestInfo = MockURLRequestInfo(
+            urlString: "http://test.com/authorization/second",
+            duration: 300
+        )
+        var retryCount = 0
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { success, _ in
+            await success(TestConstants.authorizedCredential)
+            retryCount += 1
+        }
+        async let firstRequest = sut.sessionManager.request(with: testFirstUrlRequestInfo)
+        async let secondRequest = sut.sessionManager.request(with: testSecondUrlRequestInfo)
+        
+        let firstResponse = try await #require(firstRequest.response)
+        let secondResponse = try await #require(secondRequest.response)
+        #expect(firstResponse.statusCode == TestConstants.authenticationSuccessCode)
+        #expect(secondResponse.statusCode == TestConstants.authenticationSuccessCode)
+        #expect(retryCount == TestConstants.retryCount)
+    }
+    
+    @Test
+    func retryCount() async throws {
+        let testMaxRetryCount = 5
+        let sut = makeSUT(maxRetryCount: testMaxRetryCount)
+        
+        var retryCount = 0
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { success, _ in
+            await success(TestConstants.unauthorizedCredential)
             retryCount += 1
         }
         
-        let expectation = XCTestExpectation()
-        
-        sessionManager?.request(with: testUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
+        let response = await sut.sessionManager.request(with: MockURLRequestInfo(duration: 0))
+
+        let httpResponse = try #require(response.response)
+        #expect(response.error != nil)
+        #expect(httpResponse.statusCode == TestConstants.authenticationFailureCode)
+        #expect(retryCount == testMaxRetryCount)
     }
     
-    func testOneFailedRequest() {
-        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
+    @Test
+    func manyUnauthorizedRequests() async throws {
+        let sut = makeSUT()
+        
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockUnauthorizedCredential)
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { success, _ in
             retryCount += 1
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            await success(TestConstants.authorizedCredential)
         }
         
-        let expectation = XCTestExpectation()
-        
-        sessionManager?.request(with: testUrlRequestInfo).response { response in
-            let error = response.error?.asAFError?.underlyingError as NSError?
-            XCTAssertNotNil(error)
-            XCTAssert(error?.code == MockAuthenticationFailureCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
-    }
-    
-    func testTwoUnauthorizedRequests() {
-        let testFirstUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/first")!, duration: 100)
-        let testSecondUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/second")!, duration: 300)
-        var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockAuthorizedCredential)
-            retryCount += 1
-        }
-        
-        let expectation = XCTestExpectation()
-        expectation.expectedFulfillmentCount = 2
-        
-        sessionManager?.request(with: testFirstUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        sessionManager?.request(with: testSecondUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-            XCTAssert(retryCount == 1)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
-    }
-    
-    func testRetryCount() {
-        requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: errorDomain)
-        let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
-        
-        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 0)
-        var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockUnauthorizedCredential)
-            retryCount += 1
-        }
-        
-        let expectation = XCTestExpectation()
-        
-        session.request(with: testUrlRequestInfo).response { response in
-            let error = response.error?.asAFError?.underlyingError as NSError?
-            XCTAssertNotNil(error)
-            XCTAssert(error?.code == MockAuthenticationFailureCode)
-            XCTAssert(retryCount == 5)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
-    }
-    
-    func testManyUnauthorizedRequests() {
-        var retryCount = 0
-        
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            retryCount += 1
-            DispatchQueue.global().asyncAfter(deadline: .now() + 0.3) {
-                success(MockAuthorizedCredential)
-            }
-        }
-        
-        let expectation = XCTestExpectation()
-        expectation.expectedFulfillmentCount = 10
-        expectation.assertForOverFulfill = true
-        
-        (1...10).forEach { index in
-            let deadline = DispatchTime.now() + DispatchTimeInterval.milliseconds(index * 100)
-            DispatchQueue.global().asyncAfter(deadline: deadline) { [weak self] in
-                let requestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization/\(index)")!, duration: 100)
-                self?.sessionManager?.request(with: requestInfo).response { response in
-                    XCTAssertNotNil(response.response)
-                    XCTAssert(response.response!.statusCode == MockAuthenticationSuccessCode)
-                    XCTAssert(retryCount == 1)
-                    expectation.fulfill()
+        let responses = await withTaskGroup(of: DataResponse<Data?, AFError>.self) {
+            [sessionManager = sut.sessionManager] group in
+
+            for index in 1...10 {
+                group.addTask {
+                    try? await Task.sleep(nanoseconds: UInt64(index * 100_000_000))
+                    let requestInfo = MockURLRequestInfo(
+                        urlString: "http://test.com/authorization/\(index)",
+                        duration: 100
+                    )
+                    return await sessionManager.request(with: requestInfo)
                 }
             }
+            
+            var resultList = [DataResponse<Data?, AFError>]()
+            for await result in group {
+                resultList.append(result)
+            }
+            return resultList
         }
-
-        wait(for: [expectation], timeout: 30)
-    }
-    
-    func testErrorDomain() {
-        requestsHandler = AlamofireSessionRenewer(authenticationErrorCode: MockAuthenticationFailureCode, credentialHeaderField: MockCredentialHeaderField, maxRetryCount: 5, errorDomain: "com.test.errorDomain")
-        let session = Session(configuration: sessionConfiguration, interceptor: requestsHandler)
         
-        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
+        for response in responses {
+            let httpResponse = try #require(response.response)
+            #expect(httpResponse.statusCode == TestConstants.authenticationSuccessCode)
+        }
+        #expect(retryCount == TestConstants.retryCount)
+    }
+
+    @Test
+    func errorDomain() async throws {
+        let sut = makeSUT(errorDomain: "com.test.errorDomain")
+        
         var retryCount = 0
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            success(MockAuthorizedCredential)
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { success, _ in
+            await success(TestConstants.authorizedCredential)
             retryCount += 1
         }
+        let response = await sut.sessionManager.request(with: MockURLRequestInfo())
         
-        let expectation = XCTestExpectation()
-        
-        session.request(with: testUrlRequestInfo).response { response in
-            XCTAssertNotNil(response.response)
-            XCTAssert(response.response!.statusCode == MockAuthenticationFailureCode)
-            XCTAssert(retryCount == 0)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
-    }
-    func testFailureRenewWithCleanCred() {
-        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            failure(true)
-        }
-        
-        let expectation = XCTestExpectation()
-        
-        sessionManager?.request(with: testUrlRequestInfo).response { [weak self] response in
-            XCTAssertNil(self?.requestsHandler?.credential)
-            expectation.fulfill()
-        }
-        
-        wait(for: [expectation], timeout: 30)
+        let httpResponse = try #require(response.response)
+        #expect(httpResponse.statusCode == TestConstants.authenticationFailureCode)
+        #expect(retryCount == 0)
     }
     
-    func testFailureRenewWithoutCleanCred() {
-        let testUrlRequestInfo = MockURLRequestInfo(url: URL(string: "http://test.com/authorization")!, duration: 1)
-        requestsHandler?.credential = MockUnauthorizedCredential
-        requestsHandler?.renewCredential = { success, failure in
-            failure(false)
+    @Test
+    func failureRenewWithCleanCred() async {
+        let sut = makeSUT()
+        
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { _, failure in
+            await failure(true)
         }
-        
-        let expectation = XCTestExpectation()
-        
-        sessionManager?.request(with: testUrlRequestInfo).response { [weak self] response in
-            XCTAssertNotNil(self?.requestsHandler?.credential)
-            expectation.fulfill()
+        _ = await sut.sessionManager.request(with: MockURLRequestInfo())
+        let currentCredential = await sut.requestsHandler.credential
+
+        #expect(currentCredential == nil)
+    }
+
+    @Test
+    func failureRenewWithoutCleanCred() async {
+        let sut = makeSUT()
+
+        await sut.requestsHandler.setCredential(TestConstants.unauthorizedCredential)
+        await sut.requestsHandler.setRenewCredentialHandler { _, failure in
+            await failure(false)
         }
+        _ = await sut.sessionManager.request(with: MockURLRequestInfo())
+        let currentCredential = await sut.requestsHandler.credential
         
-        wait(for: [expectation], timeout: 30)
+        #expect(currentCredential != nil)
+    }
+}
+
+extension ExampleTests {
+    private struct SUT {
+        let requestsHandler: AlamofireSessionRenewer
+        let sessionManager: Session
+    }
+
+    private func makeSUT(
+        maxRetryCount: Int = TestConstants.retryCount,
+        errorDomain: String = TestConstants.errorDomain
+    ) -> SUT {
+        let sessionConfiguration = URLSessionConfiguration.ephemeral
+        sessionConfiguration.protocolClasses = [MockURLProtocol.self]
+        let requestsHandler = AlamofireSessionRenewer(
+            authenticationErrorCode: TestConstants.authenticationFailureCode,
+            credentialHeaderField: TestConstants.credentialHeaderField,
+            maxRetryCount: maxRetryCount,
+            errorDomain: errorDomain
+        )
+        let sessionManager = Session(
+            configuration: sessionConfiguration,
+            interceptor: requestsHandler
+        )
+        return SUT(
+            requestsHandler: requestsHandler,
+            sessionManager: sessionManager
+        )
     }
 }

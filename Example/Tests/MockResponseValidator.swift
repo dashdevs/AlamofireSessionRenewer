@@ -11,7 +11,7 @@ import Alamofire
 func MockResponseValidator(request: URLRequest?, response: HTTPURLResponse, data: Data?) -> Request.ValidationResult {
     switch response.statusCode {
     case 400...Int.max:
-        return .failure(NSError(domain: errorDomain, code: response.statusCode, userInfo: nil))
+        return .failure(NSError(domain: TestConstants.errorDomain, code: response.statusCode, userInfo: nil))
     default:
         return .success(Void())
     }
