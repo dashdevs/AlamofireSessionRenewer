@@ -10,7 +10,7 @@ import Alamofire
 
 public typealias SuccessRenewHandler = (String) async -> Void
 public typealias FailureRenewHandler = (Bool) async -> Void
-public typealias RenewCredentialHandler = ((SuccessRenewHandler, FailureRenewHandler) async -> Void)
+public typealias RenewCredentialHandler = ((SuccessRenewHandler, FailureRenewHandler) -> Void)
 
 /// That actor is responsible for authentication credentials renewing process
 final public actor AlamofireSessionRenewer: RequestInterceptor {
@@ -30,7 +30,7 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
     private let errorDomain: String
     
     /// Authentication information unit
-    private var credential: String?
+    public var credential: String?
     
     /// An array which stores closures to retry requests after updating credentials
     private var pendingRequests: [(RetryResult) -> Void] = []
@@ -39,14 +39,18 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
     private var renewCredential: RenewCredentialHandler?
     
     /// Handler for successful credential renewal.
-    private lazy var successRenewHandler: SuccessRenewHandler = { credential in
-        self.credential = credential
+    private lazy var successRenewHandler: SuccessRenewHandler = { [weak self] credential in
+        guard let self else { return }
+        await self.setCredential(credential)
         await self.fulfillPendingRequests(with: .retry)
     }
     
     /// Handler for failed credential renewal.
-    private lazy var failureRenewHandler: FailureRenewHandler = { needsToClearCredential in
-        if needsToClearCredential { self.credential = nil }
+    private lazy var failureRenewHandler: FailureRenewHandler = { [weak self] needsToClearCredential in
+        guard let self else { return }
+        if needsToClearCredential {
+            await self.setCredential(nil)
+        }
         await self.fulfillPendingRequests(with: .doNotRetry)
     }
     
@@ -74,17 +78,17 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
     
     /// Adds a request to the pending requests queue for retrying after credential renewal.
     /// - Parameter requestRetryCompletion: The completion handler to be called with the retry result.
-    private func addToQueue(requestRetryCompletion: @escaping (RetryResult) -> Void) async {
+    private func addToQueue(requestRetryCompletion: @escaping (RetryResult) -> Void) {
         pendingRequests.append(requestRetryCompletion)
         
         if pendingRequests.count == 1 {
-            await renewCredential?(successRenewHandler, failureRenewHandler)
+            renewCredential?(successRenewHandler, failureRenewHandler)
         }
     }
     
     /// Method completes all pending requests in queue
     /// - Parameter result: flag indicating whether requests need to be retried or not
-    private func fulfillPendingRequests(with result: RetryResult) async {
+    private func fulfillPendingRequests(with result: RetryResult) {
         pendingRequests.forEach { $0(result) }
         pendingRequests.removeAll()
     }
@@ -95,14 +99,8 @@ final public actor AlamofireSessionRenewer: RequestInterceptor {
 extension AlamofireSessionRenewer {
     /// Sets the current authentication credential.
     /// - Parameter credential: The new credential string.
-    public func setCredential(_ credential: String) async {
+    public func setCredential(_ credential: String?) {
         self.credential = credential
-    }
-    
-    /// Retrieves the current authentication credential.
-    /// - Returns: The current credential string, if any.
-    public func getCredential() async -> String? {
-        self.credential
     }
     
     /// Sets the handler to be used for credential renewal.
@@ -113,18 +111,20 @@ extension AlamofireSessionRenewer {
     
     /// Checks if the current credential is empty.
     /// - Returns: True if no credential is set, false otherwise.
-    public func isCredentialEmpty() async -> Bool {
+    public func isCredentialEmpty() -> Bool {
         credential == nil
     }
     
     /// Method checks whether request contains authentication credentials or not
     /// - Parameter request: request to check credentials containment
-    public func isCredentialEqual(to request: Request) async -> Bool {
-        if let currentCred = credential,
-           let receivedCred = request.task?.originalRequest?.value(forHTTPHeaderField: credentialHeaderField) {
-            return currentCred == receivedCred
+    public func isCredentialEqual(to request: Request) -> Bool {
+        if
+            let credential,
+            let receivedCredential = request.task?.originalRequest?.value(forHTTPHeaderField: credentialHeaderField)
+        {
+            credential == receivedCredential
         } else {
-            return false
+            false
         }
     }
     
@@ -137,8 +137,8 @@ extension AlamofireSessionRenewer {
     ) {
         Task {
             var updatedRequest = urlRequest
-            if let cred = await self.getCredential() {
-                updatedRequest.setValue(cred, forHTTPHeaderField: self.credentialHeaderField)
+            if let credential = await credential {
+                updatedRequest.setValue(credential, forHTTPHeaderField: credentialHeaderField)
             }
             completion(.success(updatedRequest))
         }
@@ -153,19 +153,16 @@ extension AlamofireSessionRenewer {
         completion: @escaping (RetryResult) -> Void
     ) {
         Task {
-            let underlyingError = error.asAFError?.underlyingError as? NSError
-            let isEmpty = await isCredentialEmpty()
-            let underlyingErrorDomain = await underlyingError?.domain // updated variable name
-            let errorDomain = await self.errorDomain
-            guard !isEmpty,
-                  underlyingErrorDomain == errorDomain,
-                  underlyingError?.code == authenticationErrorCode else {
-                completion(.doNotRetry)
-                return
+            guard
+                await !isCredentialEmpty(),
+                let underlyingError = error.asAFError?.underlyingError as? NSError,
+                underlyingError.domain == errorDomain,
+                underlyingError.code == authenticationErrorCode
+            else {
+                return completion(.doNotRetry)
             }
-            if let maxRetryCount = maxRetryCount, maxRetryCount <= request.retryCount {
-                completion(.doNotRetryWithError(error))
-                return
+            if let maxRetryCount, maxRetryCount <= request.retryCount {
+                return completion(.doNotRetryWithError(error))
             }
             if await isCredentialEqual(to: request) {
                 await addToQueue(requestRetryCompletion: completion)
