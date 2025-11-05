@@ -38,7 +38,7 @@ public actor AlamofireSessionRenewer: RequestInterceptor {
     private var isRenewing: Bool = false
     
     /// Closure which is called when authentication credentials renewing process finishes
-    private var renewCredential: ((@escaping SuccessRenewHandler, @escaping FailureRenewHandler) async -> Void)?
+    private let renewCredential: (@escaping SuccessRenewHandler, @escaping FailureRenewHandler) async -> Void
     
     /// Handler for successful credential renewal.
     private lazy var successRenewHandler: SuccessRenewHandler = { [weak self] credential in
@@ -70,16 +70,19 @@ public actor AlamofireSessionRenewer: RequestInterceptor {
     ///   - credentialHeaderField: The HTTP header field name for credentials (default is "Authorization").
     ///   - maxRetryCount: The maximum number of retry attempts allowed.
     ///   - errorDomain: The error domain that identifies retriable requests.
+    ///   - renewCredential: The closure that handles the credential renewal process.
     public init(
         authenticationErrorCode: Int = 401,
         credentialHeaderField: String = "Authorization",
         maxRetryCount: Int? = nil,
-        errorDomain: String
+        errorDomain: String,
+        renewCredential: @escaping (@escaping SuccessRenewHandler, @escaping FailureRenewHandler) async -> Void
     ) {
         self.authenticationErrorCode = authenticationErrorCode
         self.credentialHeaderField = credentialHeaderField
         self.maxRetryCount = maxRetryCount
         self.errorDomain = errorDomain
+        self.renewCredential = renewCredential
     }
     
     // MARK: Methods
@@ -91,11 +94,6 @@ public actor AlamofireSessionRenewer: RequestInterceptor {
         
         if pendingRequests.count == 1 && !isRenewing {
             isRenewing = true
-            guard let renewCredential = renewCredential else {
-                isRenewing = false
-                fulfillPendingRequests(with: .doNotRetry)
-                return
-            }
             await renewCredential(successRenewHandler, failureRenewHandler)
         }
     }
@@ -121,12 +119,6 @@ extension AlamofireSessionRenewer {
     /// - Parameter credential: The new credential string.
     public func setCredential(_ credential: String?) {
         self.credential = credential
-    }
-    
-    /// Sets the handler to be used for credential renewal.
-    /// - Parameter handler: The closure that handles the credential renewal.
-    public func setRenewCredentialHandler(_ handler: @escaping (@escaping SuccessRenewHandler, @escaping FailureRenewHandler) async -> Void) {
-        self.renewCredential = handler
     }
     
     /// Checks if the current credential is empty.
