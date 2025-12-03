@@ -37,6 +37,9 @@ public actor AlamofireSessionRenewer: RequestInterceptor {
     /// Flag to track if credential renewal is currently in progress. Prevents recursive refresh attempts
     private var isRenewing: Bool = false
     
+    /// Paths that should be excluded from session renewal interception
+    public var excludedPaths: Set<String>
+    
     /// Closure which is called when authentication credentials renewing process finishes
     private let renewCredential: (@escaping SuccessRenewHandler, @escaping FailureRenewHandler) async -> Void
     
@@ -70,18 +73,21 @@ public actor AlamofireSessionRenewer: RequestInterceptor {
     ///   - credentialHeaderField: The HTTP header field name for credentials (default is "Authorization").
     ///   - maxRetryCount: The maximum number of retry attempts allowed.
     ///   - errorDomain: The error domain that identifies retriable requests.
+    ///   - excludedPaths: Set of paths that should be excluded from session renewal interception.
     ///   - renewCredential: The closure that handles the credential renewal process.
     public init(
         authenticationErrorCode: Int = 401,
         credentialHeaderField: String = "Authorization",
         maxRetryCount: Int? = nil,
         errorDomain: String,
+        excludedPaths: Set<String> = [],
         renewCredential: @escaping (@escaping SuccessRenewHandler, @escaping FailureRenewHandler) async -> Void
     ) {
         self.authenticationErrorCode = authenticationErrorCode
         self.credentialHeaderField = credentialHeaderField
         self.maxRetryCount = maxRetryCount
         self.errorDomain = errorDomain
+        self.excludedPaths = excludedPaths
         self.renewCredential = renewCredential
     }
     
@@ -109,6 +115,45 @@ public actor AlamofireSessionRenewer: RequestInterceptor {
     /// - Parameter value: The new value for the renewing flag
     private func setIsRenewing(_ value: Bool) {
         isRenewing = value
+    }
+    
+    /// Checks if the given path should be excluded from session renewal interception
+    /// - Parameter path: The request path to check
+    /// - Returns: True if the path should be excluded, false otherwise
+    private func shouldExcludePath(_ path: String) -> Bool {
+        guard !excludedPaths.isEmpty else {
+            return false
+        }
+        
+        if excludedPaths.contains(path) {
+            return true
+        }
+        
+        for excludedPath in excludedPaths {
+            if matchesPattern(path: path, pattern: excludedPath) {
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    /// Checks if a path matches a pattern with wildcard support
+    /// - Parameters:
+    ///   - path: The path to check
+    ///   - pattern: The pattern to match against (supports * wildcard)
+    /// - Returns: True if the path matches the pattern, false otherwise
+    private func matchesPattern(path: String, pattern: String) -> Bool {
+        let regexPattern = pattern
+            .replacingOccurrences(of: "*", with: ".*")
+            .replacingOccurrences(of: ".", with: "\\.")
+        
+        guard let regex = try? NSRegularExpression(pattern: "^\(regexPattern)$", options: []) else {
+            return false
+        }
+        
+        let range = NSRange(location: 0, length: path.utf16.count)
+        return regex.firstMatch(in: path, options: [], range: range) != nil
     }
 }
 
@@ -140,6 +185,24 @@ extension AlamofireSessionRenewer {
         }
     }
     
+    /// Updates the set of excluded paths
+    /// - Parameter paths: Set of paths to exclude from session renewal interception
+    public func setExcludedPaths(_ paths: Set<String>) {
+        self.excludedPaths = paths
+    }
+    
+    /// Adds paths to the excluded paths set
+    /// - Parameter paths: Paths to add to the exclusion list
+    public func addExcludedPaths(_ paths: Set<String>) {
+        self.excludedPaths.formUnion(paths)
+    }
+    
+    /// Removes paths from the excluded paths set
+    /// - Parameter paths: Paths to remove from the exclusion list
+    public func removeExcludedPaths(_ paths: Set<String>) {
+        self.excludedPaths.subtract(paths)
+    }
+    
     // MARK: - RequestAdapter
     
     nonisolated public func adapt(
@@ -165,6 +228,11 @@ extension AlamofireSessionRenewer {
         completion: @escaping (RetryResult) -> Void
     ) {
         Task {
+            if let requestPath = request.request?.url?.path,
+               await shouldExcludePath(requestPath) {
+                return completion(.doNotRetry)
+            }
+            
             if await isRenewing {
                 await addToQueue(requestRetryCompletion: completion)
                 return
