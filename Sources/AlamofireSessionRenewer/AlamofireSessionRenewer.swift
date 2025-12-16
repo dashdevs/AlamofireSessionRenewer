@@ -213,7 +213,10 @@ extension AlamofireSessionRenewer {
         Task {
             var updatedRequest = urlRequest
             if let credential = await credential {
-                updatedRequest.setValue(credential, forHTTPHeaderField: credentialHeaderField)
+                let existingHeader = updatedRequest.value(forHTTPHeaderField: credentialHeaderField)
+                if existingHeader == nil {
+                    updatedRequest.setValue(credential, forHTTPHeaderField: credentialHeaderField)
+                }
             }
             completion(.success(updatedRequest))
         }
